@@ -117,7 +117,7 @@ namespace Celeste.Mod.AudioSplitter.UI
 
         private string GetOptionLabel()
         {
-            string label = CurrentOption.Label;
+            string label = CurrentOption.Label ?? "";
 
             float width = MultiLanguageFont.Measure(label).X;
             float maxWidth = Container.Width - LeftWidth() - 96f;

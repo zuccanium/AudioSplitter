@@ -20,10 +20,11 @@ namespace Celeste.Mod.AudioSplitter.Module
         public override Type SessionType => typeof(AudioSplitterModuleSession);
         public static AudioSplitterModuleSession Session => (AudioSplitterModuleSession)Instance._Session;
 
-        public AudioDuplicator Duplicator { get; private set; } = new AudioDuplicator();
+        public AudioDuplicator SFXDuplicator { get; private set; } = new AudioDuplicator();
+        public AudioDuplicator MusicDuplicator { get; private set; } = new AudioDuplicator();
         public OutputDeviceManager DeviceManager { get; private set; } = new OutputDeviceManager();
 
-        public bool Enabled => Duplicator.Initialized;
+        public bool Enabled => SFXDuplicator.Initialized && MusicDuplicator.Initialized;
 
         private AudioSplitterModulePresenter presenter = new();
         private LoadingMessage loadingMessage = null;
@@ -57,7 +58,8 @@ namespace Celeste.Mod.AudioSplitter.Module
             HookAttribute.Invoke(typeof(RemoveOnUnloadAttribute));
 
             DeviceManager.Terminate();
-            Duplicator.Terminate();
+            SFXDuplicator.Terminate();
+            MusicDuplicator.Terminate();
         }
 
         public override void Initialize()
@@ -90,10 +92,15 @@ namespace Celeste.Mod.AudioSplitter.Module
         public void ToggleAudioDuplicator()
         {
             LoadingAudioDuplication.Value = true;
-            if (!Duplicator.Initialized)
-                Duplicator.Initialize();
+            if (!SFXDuplicator.Initialized)
+                SFXDuplicator.Initialize();
             else
-                Duplicator.Terminate();
+                SFXDuplicator.Terminate();
+            
+            if (!MusicDuplicator.Initialized)
+                MusicDuplicator.Initialize();
+            else
+                MusicDuplicator.Terminate();
             LoadingAudioDuplication.Value = false;
 
             ConfigureSystemDevices();
@@ -112,15 +119,13 @@ namespace Celeste.Mod.AudioSplitter.Module
 
         public void ConfigureSystemDevices()
         {
+            DeviceManager.SetDevice(Settings.AudioOutputDevice, CelesteAudio.System);
+            
             if (!Enabled)
-            {
-                DeviceManager.SetDevice(Settings.AudioOutputDevice, CelesteAudio.System);
-            }
-            else
-            {
-                DeviceManager.SetDevice(Settings.SFXOutputDevice, CelesteAudio.System);
-                DeviceManager.SetDevice(Settings.MusicOutputDevice, Duplicator.System);
-            }
+                return;
+            
+            DeviceManager.SetDevice(Settings.SFXOutputDevice, SFXDuplicator.System);
+            DeviceManager.SetDevice(Settings.MusicOutputDevice, MusicDuplicator.System);
         }
 
         private void UpdateLoadingMessageText()
@@ -186,7 +191,8 @@ namespace Celeste.Mod.AudioSplitter.Module
             public static void OnAudioUnload(On.Celeste.Audio.orig_Unload orig)
             {
                 orig();
-                Instance.Duplicator.Terminate();
+                Instance.SFXDuplicator.Terminate();
+                Instance.MusicDuplicator.Terminate();
             }
 
             public static float OnAudioVCAVolume(On.Celeste.Audio.orig_VCAVolume orig, string path, float? volume = null)
@@ -198,20 +204,17 @@ namespace Celeste.Mod.AudioSplitter.Module
                 // Forward sounds to original and music to duplicator
                 if (path == "vca:/gameplay_sfx" || path == "vca:/ui_sfx")
                 {
-                    Instance.Duplicator.VCAVolume(path, 0);
-                    return orig(path, volume);
+                    Instance.SFXDuplicator.VCAVolume(path, 1f);
+                    Instance.MusicDuplicator.VCAVolume(path, 0f);
                 }
                 else if (path == "vca:/music")
                 {
-                    orig(path, 0);
-                    return Instance.Duplicator.VCAVolume(path, volume);
+                    Instance.MusicDuplicator.VCAVolume(path, 1f);
+                    Instance.SFXDuplicator.VCAVolume(path, 0f);
                 }
-                else
-                {
-                    // The rest of VCAs should go to both
-                    Instance.Duplicator.VCAVolume(path, volume);
-                    return orig(path, volume);
-                }
+                
+                // Volume is controlled normally on the default system
+                return orig(path, volume);
             }
 
             public static void DisableExitWhileLoading(On.Celeste.OuiMainMenu.orig_Update orig, OuiMainMenu self)

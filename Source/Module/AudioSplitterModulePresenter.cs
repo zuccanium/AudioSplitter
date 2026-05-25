@@ -60,12 +60,12 @@ namespace Celeste.Mod.AudioSplitter.Module
             view.MusicDeviceDropdown.Change((device) =>
             {
                 Settings.MusicOutputDevice = device;
-                Module.DeviceManager.SetDevice(Settings.MusicOutputDevice, Module.Duplicator.System);
+                Module.DeviceManager.SetDevice(Settings.MusicOutputDevice, Module.MusicDuplicator.System);
             });
             view.SFXDeviceDropdown.Change((device) =>
             {
                 Settings.SFXOutputDevice = device;
-                Module.DeviceManager.SetDevice(Settings.SFXOutputDevice, global::Celeste.Audio.System);
+                Module.DeviceManager.SetDevice(Settings.SFXOutputDevice, Module.SFXDuplicator.System);
             });
 
             view.ToggleDuplicatorButton.Pressed(() =>
@@ -85,7 +85,7 @@ namespace Celeste.Mod.AudioSplitter.Module
 
         private void ToggleDropdownVisibility()
         {
-            view.AudioDeviceDropdown.Visible = !Module.Enabled;
+            view.AudioDeviceDropdown.Visible = true;
             view.SFXDeviceDropdown.Visible = Module.Enabled;
             view.MusicDeviceDropdown.Visible = Module.Enabled;
         }
