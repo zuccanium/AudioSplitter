@@ -14,6 +14,8 @@ namespace Celeste.Mod.AudioSplitter.Utility
         public static void Invoke(Type attribute)
         {
             var methods = AppDomain.CurrentDomain.GetAssemblies()
+                // Could not load type 'OptionValue' from assembly 'Steamworks.NET, Version=2024.8.0.0, Culture=neutral, PublicKeyToken=null' because it contains an object field at offset 0 that is incorrectly aligned or overlapped by a non-object field.
+                .Where(a => a.FullName != "Steamworks.NET, Version=2024.8.0.0, Culture=neutral, PublicKeyToken=null")
                 .SelectMany(a => a.GetTypes())
                 .Where(t => t.IsClass)
                 .SelectMany(t => t.GetMethods());
