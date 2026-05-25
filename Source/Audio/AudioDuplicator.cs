@@ -57,9 +57,9 @@ namespace Celeste.Mod.AudioSplitter.Audio
 
             var attributes = new FMOD.Studio._3D_ATTRIBUTES
             {
-                position = new VECTOR { x = 0f, y = 0f, z = 1f },
-                forward = new VECTOR { x = 0f, y = 1f, z = 0f },
-                up = new VECTOR { x = 0f, y = 0f, z = -345f },
+                forward = new VECTOR { x = 0f, y = 0f, z = 1f },
+                up = new VECTOR { x = 0f, y = 1f, z = 0f },
+                position = new VECTOR { x = 0f, y = 0f, z = -345f },
             };
             system.setListenerAttributes(0, attributes).CheckFMOD();
 
